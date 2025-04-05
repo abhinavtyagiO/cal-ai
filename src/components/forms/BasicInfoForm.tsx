@@ -1,0 +1,123 @@
+'use client';
+
+import { useState } from 'react';
+import { OnboardingFormData } from '@/types/onboarding';
+
+interface BasicInfoFormProps {
+  onSubmit: (data: Partial<OnboardingFormData>) => void;
+  data?: Partial<OnboardingFormData>;
+}
+
+export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
+  const [formData, setFormData] = useState({
+    name: data?.name || '',
+    age: data?.age || '',
+    height: data?.height || '',
+    current_weight: data?.current_weight || '',
+    desired_weight: data?.desired_weight || '',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      name: formData.name,
+      age: Number(formData.age),
+      height: Number(formData.height),
+      current_weight: Number(formData.current_weight),
+      desired_weight: Number(formData.desired_weight),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          Name
+        </label>
+        <input
+          type="text"
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="age" className="block text-sm font-medium text-gray-700">
+          Age
+        </label>
+        <input
+          type="number"
+          id="age"
+          value={formData.age}
+          onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          min="1"
+          max="120"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="height" className="block text-sm font-medium text-gray-700">
+          Height (cm)
+        </label>
+        <input
+          type="number"
+          id="height"
+          value={formData.height}
+          onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          min="100"
+          max="250"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="current_weight" className="block text-sm font-medium text-gray-700">
+          Current Weight (kg)
+        </label>
+        <input
+          type="number"
+          id="current_weight"
+          value={formData.current_weight}
+          onChange={(e) => setFormData({ ...formData, current_weight: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          min="30"
+          max="300"
+          step="0.1"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="desired_weight" className="block text-sm font-medium text-gray-700">
+          Desired Weight (kg)
+        </label>
+        <input
+          type="number"
+          id="desired_weight"
+          value={formData.desired_weight}
+          onChange={(e) => setFormData({ ...formData, desired_weight: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          min="30"
+          max="300"
+          step="0.1"
+          required
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Next
+        </button>
+      </div>
+    </form>
+  );
+} 
