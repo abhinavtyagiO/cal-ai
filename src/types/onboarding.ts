@@ -5,6 +5,7 @@ export interface OnboardingFormData {
   height: number;
   current_weight: number;
   desired_weight: number;
+  gender: 'male' | 'female';
 
   // Body Composition Goals
   current_body_fat: number;

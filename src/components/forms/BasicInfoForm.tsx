@@ -16,6 +16,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
     height: data?.height || '',
     current_weight: data?.current_weight || '',
     desired_weight: data?.desired_weight || '',
+    gender: data?.gender || '',
   });
 
   // Update form data when data prop changes
@@ -27,6 +28,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
         height: data.height || '',
         current_weight: data.current_weight || '',
         desired_weight: data.desired_weight || '',
+        gender: data.gender || '',
       });
     }
   }, [data]);
@@ -39,6 +41,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
       height: Number(formData.height),
       current_weight: Number(formData.current_weight),
       desired_weight: Number(formData.desired_weight),
+      gender: formData.gender as 'male' | 'female',
     });
   };
 
@@ -57,6 +60,24 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
           required
           disabled={isLoading}
         />
+      </div>
+
+      <div>
+        <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
+          Gender
+        </label>
+        <select
+          id="gender"
+          value={formData.gender}
+          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          required
+          disabled={isLoading}
+        >
+          <option value="">Select gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
       </div>
 
       <div>

@@ -12,6 +12,7 @@ const onboardingSchema = z.object({
   height: z.number().positive(),
   current_weight: z.number().positive(),
   desired_weight: z.number().positive(),
+  gender: z.enum(['male', 'female']),
 
   // Body Composition Goals
   current_body_fat: z.number().min(0).max(100),
