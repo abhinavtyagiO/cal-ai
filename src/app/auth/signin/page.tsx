@@ -1,13 +1,23 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { log } from 'console';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
+    // Check for error message in URL
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    }
+
     // Check if user is already signed in
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -28,22 +38,51 @@ export default function SignInPage() {
     };
 
     checkUser();
-  }, [router]);
+  }, [router, searchParams, supabase]);
 
   const handleGoogleSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      setError(null);
+      console.log('Initiating Google sign-in...');
+      
+    //   // The callback URL must match what's registered in Google OAuth client
+    //   const callbackUrl = 'https://uucjqkvkpkrzshkjjmfr.supabase.co/auth/v1/callback';
+    //   // The redirect URL is where we want users to end up after auth
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+
+      console.log('Redirect URL:', redirectUrl);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: redirectUrl,
         }
       });
 
       if (error) {
+        console.error('Error signing in with Google:', error);
+        setError(error.message);
         throw error;
       }
+      
+      console.log('Sign-in initiated:', data);
+      console.log('Auth URL:', data?.url);
+      
+      // If we have a URL, redirect to it
+      if (data?.url) {
+        console.log('Redirecting to Google auth page...');
+        window.location.href = data.url;
+      } else {
+        console.error('No auth URL received from Supabase');
+        setError('Failed to initiate Google sign-in. Please try again.');
+      }
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error in Google sign-in:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
     }
   };
 
@@ -58,6 +97,14 @@ export default function SignInPage() {
             Your personal AI-powered fitness companion
           </p>
         </div>
+        
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+        
         <div className="mt-8 space-y-6">
           <button
             onClick={handleGoogleSignIn}

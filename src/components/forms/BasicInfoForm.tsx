@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { OnboardingFormData } from '@/types/onboarding';
 
 interface BasicInfoFormProps {
   onSubmit: (data: Partial<OnboardingFormData>) => void;
   data?: Partial<OnboardingFormData>;
+  isLoading?: boolean;
 }
 
-export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
+export default function BasicInfoForm({ onSubmit, data, isLoading = false }: BasicInfoFormProps) {
   const [formData, setFormData] = useState({
     name: data?.name || '',
     age: data?.age || '',
@@ -16,6 +17,19 @@ export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
     current_weight: data?.current_weight || '',
     desired_weight: data?.desired_weight || '',
   });
+
+  // Update form data when data prop changes
+  useEffect(() => {
+    if (data) {
+      setFormData({
+        name: data.name || '',
+        age: data.age || '',
+        height: data.height || '',
+        current_weight: data.current_weight || '',
+        desired_weight: data.desired_weight || '',
+      });
+    }
+  }, [data]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +55,7 @@ export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           required
+          disabled={isLoading}
         />
       </div>
 
@@ -57,6 +72,7 @@ export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
           min="1"
           max="120"
           required
+          disabled={isLoading}
         />
       </div>
 
@@ -73,6 +89,7 @@ export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
           min="100"
           max="250"
           required
+          disabled={isLoading}
         />
       </div>
 
@@ -90,6 +107,7 @@ export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
           max="300"
           step="0.1"
           required
+          disabled={isLoading}
         />
       </div>
 
@@ -107,15 +125,27 @@ export default function BasicInfoForm({ onSubmit, data }: BasicInfoFormProps) {
           max="300"
           step="0.1"
           required
+          disabled={isLoading}
         />
       </div>
 
       <div className="flex justify-end">
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
         >
-          Next
+          {isLoading ? (
+            <span className="flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </span>
+          ) : (
+            'Next'
+          )}
         </button>
       </div>
     </form>

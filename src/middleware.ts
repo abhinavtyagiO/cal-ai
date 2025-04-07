@@ -5,33 +5,33 @@ import type { NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req: request, res });
+  const { data: { session } } = await supabase.auth.getSession();
 
-  // Refresh session if expired
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Get the pathname of the request
+  const path = request.nextUrl.pathname;
+  console.log('Middleware hit for path:', path);
 
-  // If user is not signed in and the current path is not /auth/signin,
-  // redirect the user to /auth/signin
-  if (!session && !request.nextUrl.pathname.startsWith('/auth')) {
-    return NextResponse.redirect(new URL('/auth/signin', request.url));
+  // Skip middleware for auth-related paths and Supabase callback
+  if (
+    path.startsWith('/auth/') ||
+    path.includes('supabase.co/auth/v1/callback')
+  ) {
+    console.log('Skipping middleware for auth route');
+    return res;
   }
 
-  // If user is signed in and the current path is /auth/signin,
-  // redirect the user to /dashboard
-  if (session && request.nextUrl.pathname.startsWith('/auth')) {
-    // Check if user has completed onboarding
-    const { data: user } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', session.user.id)
-      .single();
+  // If user is not signed in and trying to access a protected route
+  if (!session && !path.startsWith('/auth/')) {
+    console.log('No session, redirecting to signin');
+    const redirectUrl = new URL('/auth/signin', request.url);
+    return NextResponse.redirect(redirectUrl);
+  }
 
-    if (user) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    } else {
-      return NextResponse.redirect(new URL('/onboarding', request.url));
-    }
+  // If user is signed in and trying to access auth pages
+  if (session && path.startsWith('/auth/')) {
+    console.log('Session present, redirecting to dashboard');
+    const redirectUrl = new URL('/dashboard', request.url);
+    return NextResponse.redirect(redirectUrl);
   }
 
   return res;
@@ -40,12 +40,12 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
+     * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
 }; 

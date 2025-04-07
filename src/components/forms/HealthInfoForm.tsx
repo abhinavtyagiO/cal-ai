@@ -1,25 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { OnboardingFormData } from '@/types/onboarding';
 
 interface HealthInfoFormProps {
   onSubmit: (data: Partial<OnboardingFormData>) => void;
   data?: Partial<OnboardingFormData>;
+  isLoading?: boolean;
 }
 
-export default function HealthInfoForm({ onSubmit, data }: HealthInfoFormProps) {
+export default function HealthInfoForm({ onSubmit, data, isLoading = false }: HealthInfoFormProps) {
   const [formData, setFormData] = useState({
     medical_conditions: data?.medical_conditions || '',
     additional_info: data?.additional_info || '',
   });
 
+  // Update form data when data prop changes
+  useEffect(() => {
+    if (data) {
+      setFormData({
+        medical_conditions: data.medical_conditions || '',
+        additional_info: data.additional_info || '',
+      });
+    }
+  }, [data]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      medical_conditions: formData.medical_conditions || undefined,
-      additional_info: formData.additional_info || undefined,
-    });
+    onSubmit(formData);
   };
 
   return (
@@ -32,12 +40,13 @@ export default function HealthInfoForm({ onSubmit, data }: HealthInfoFormProps) 
           id="medical_conditions"
           value={formData.medical_conditions}
           onChange={(e) => setFormData({ ...formData, medical_conditions: e.target.value })}
-          rows={3}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          placeholder="List any medical conditions that might affect your diet or exercise routine..."
+          rows={3}
+          placeholder="List any medical conditions, medications, or health concerns..."
+          disabled={isLoading}
         />
-        <p className="mt-1 text-sm text-gray-500">
-          This information will help us provide appropriate recommendations.
+        <p className="mt-2 text-sm text-gray-500">
+          This information helps us ensure your diet plan is safe and appropriate for your health needs.
         </p>
       </div>
 
@@ -49,21 +58,30 @@ export default function HealthInfoForm({ onSubmit, data }: HealthInfoFormProps) 
           id="additional_info"
           value={formData.additional_info}
           onChange={(e) => setFormData({ ...formData, additional_info: e.target.value })}
-          rows={3}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          placeholder="Any other information you'd like to share about your health, lifestyle, or goals..."
+          rows={3}
+          placeholder="Any other information you'd like us to know..."
+          disabled={isLoading}
         />
-        <p className="mt-1 text-sm text-gray-500">
-          This is optional but can help us better personalize your experience.
-        </p>
       </div>
 
       <div className="flex justify-end">
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
         >
-          Complete Setup
+          {isLoading ? (
+            <span className="flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </span>
+          ) : (
+            'Complete Onboarding'
+          )}
         </button>
       </div>
     </form>

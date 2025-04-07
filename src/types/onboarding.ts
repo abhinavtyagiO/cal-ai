@@ -20,6 +20,8 @@ export interface OnboardingFormData {
 
   // Dietary Preferences
   meal_preferences: 'vegetarian' | 'non-vegetarian';
+  food_allergies?: string;
+  food_restrictions?: string;
 
   // Health Information
   medical_conditions?: string;
