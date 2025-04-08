@@ -18,6 +18,12 @@ export default function SignInPage() {
       setError(decodeURIComponent(errorParam));
     }
 
+    // Check for session expired message
+    const messageParam = searchParams.get('message');
+    if (messageParam === 'session_expired') {
+      setError('Your session has expired due to inactivity. Please sign in again.');
+    }
+
     // Check if user is already signed in
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
