@@ -65,13 +65,15 @@ export async function POST(request: Request) {
       cardio_intensity: validatedData.cardio_intensity,
     };
     
-    // Remove workout fields from the main data object
+    // Remove workout fields and food preference fields from the main data object
     const { 
       workout_frequency, 
       workout_schedule, 
       cardio_type, 
       cardio_duration, 
       cardio_intensity,
+      food_allergies,
+      food_restrictions,
       ...userData 
     } = validatedData;
     

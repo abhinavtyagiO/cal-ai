@@ -1,219 +1,179 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { generateMealPlan } from '@/lib/ai/openai';
+import OpenAI from 'openai';
+import { OnboardingFormData } from '@/types/onboarding';
 
-// Validation schema for the request
-const generateDietPlanSchema = z.object({
-  userId: z.string().uuid(),
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
-
-// Calculate BMR using Mifflin-St Jeor Equation
-function calculateBMR(weight: number, height: number, age: number, gender: 'male' | 'female'): number {
-  const bmr = (10 * weight) + (6.25 * height) - (5 * age);
-  return gender === 'male' ? bmr + 5 : bmr - 161;
-}
-
-// Calculate TDEE (Total Daily Energy Expenditure)
-function calculateTDEE(bmr: number, activityLevel: number): number {
-  return bmr * activityLevel;
-}
-
-// Calculate macros based on goals
-function calculateMacros(tdee: number, currentWeight: number, desiredWeight: number, duration: number): {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fats: number;
-} {
-  // Calculate weight change per week
-  const totalWeightChange = desiredWeight - currentWeight;
-  const weeklyWeightChange = totalWeightChange / (duration / 7);
-  
-  // Adjust calories based on weight change goal
-  // 1 kg of fat = 7700 calories
-  const calorieAdjustment = weeklyWeightChange * 7700 / 7;
-  const targetCalories = tdee + calorieAdjustment;
-
-  // Calculate macros
-  const protein = currentWeight * 2.2; // 2.2g per kg of body weight
-  const fats = (targetCalories * 0.25) / 9; // 25% of calories from fat
-  const carbs = (targetCalories - (protein * 4 + fats * 9)) / 4; // Remaining calories from carbs
-
-  return {
-    calories: Math.round(targetCalories),
-    protein: Math.round(protein),
-    carbs: Math.round(carbs),
-    fats: Math.round(fats),
-  };
-}
 
 export async function POST(request: Request) {
   try {
     const supabase = createRouteHandlerClient({ cookies });
-    const body = await request.json();
-
-    // Validate the request body
-    const { userId } = generateDietPlanSchema.parse(body);
-
-    // Fetch user data
-    const { data: user, error: userError } = await supabase
+    
+    // Get the current user
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      return NextResponse.json(
+        { status: 'error', message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const userId = session.user.id;
+    
+    // Get the user data from the database
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
       .single();
-
+    
     if (userError) {
-      throw userError;
-    }
-
-    if (!user) {
+      console.error('Error fetching user data:', userError);
       return NextResponse.json(
-        { status: 'error', message: 'User not found' },
-        { status: 404 }
+        { status: 'error', message: 'Failed to fetch user data' },
+        { status: 500 }
       );
     }
-
-    // Calculate BMR and TDEE
-    const bmr = calculateBMR(user.current_weight, user.height, user.age, 'male'); // Default to male for now
-    const activityLevel = 1.55; // Moderate activity level (can be adjusted based on workout frequency)
-    const tdee = calculateTDEE(bmr, activityLevel);
-
-    // Calculate macros
-    const macros = calculateMacros(
-      tdee,
-      user.current_weight,
-      user.desired_weight,
-      user.duration
-    );
-
-    // Parse workout details
-    const workoutDetails = user.workout_details as {
-      frequency: number;
-      schedule: string[];
-      cardio_details?: string;
-    };
-
-    // Generate meal plan using OpenAI API
-    let mealPlan;
-    try {
-      const openaiResponse = await generateMealPlan({
-        bmr,
-        tdee,
-        targetCalories: macros.calories,
-        protein: macros.protein,
-        carbs: macros.carbs,
-        fats: macros.fats,
-        duration: user.duration,
-        mealPreferences: user.meal_preferences,
-        workoutFrequency: workoutDetails.frequency,
-        workoutSchedule: workoutDetails.schedule,
-        cardioDetails: workoutDetails.cardio_details,
-        medicalConditions: user.medical_conditions || undefined
-      });
-      
-      mealPlan = openaiResponse.meal_plan;
-    } catch (error) {
-      console.error('Error generating meal plan with OpenAI API:', error);
-      
-      // Fallback to a default meal plan if the API call fails
-      mealPlan = {
-        breakfast: [
-          {
-            name: 'Oatmeal with Protein',
-            calories: 400,
-            protein: 20,
-            carbs: 60,
-            fats: 10,
-            ingredients: ['1 cup oats', '1 scoop protein powder', '1 banana', '1 tbsp honey'],
-            instructions: 'Cook oats with water, stir in protein powder, top with banana and honey'
-          }
-        ],
-        lunch: [
-          {
-            name: 'Chicken Salad',
-            calories: 500,
-            protein: 40,
-            carbs: 30,
-            fats: 20,
-            ingredients: ['200g chicken breast', 'Mixed greens', 'Olive oil', 'Balsamic vinegar'],
-            instructions: 'Grill chicken, chop and mix with greens, dress with olive oil and vinegar'
-          }
-        ],
-        dinner: [
-          {
-            name: 'Salmon with Vegetables',
-            calories: 600,
-            protein: 45,
-            carbs: 40,
-            fats: 25,
-            ingredients: ['200g salmon', 'Brown rice', 'Mixed vegetables', 'Olive oil'],
-            instructions: 'Bake salmon, cook rice, steam vegetables, combine and serve'
-          }
-        ],
-        snacks: [
-          {
-            name: 'Greek Yogurt with Nuts',
-            calories: 200,
-            protein: 15,
-            carbs: 20,
-            fats: 8,
-            ingredients: ['1 cup Greek yogurt', 'Mixed nuts', 'Honey'],
-            instructions: 'Top yogurt with nuts and drizzle honey'
-          }
-        ]
-      };
-    }
-
-    // Insert the diet plan
-    const { data: dietPlan, error: dietPlanError } = await supabase
+    
+    // Generate the diet plan using OpenAI
+    const dietPlan = await generateDietPlan(userData);
+    
+    // Save the diet plan to the database
+    const { data: savedPlan, error: saveError } = await supabase
       .from('diet_plans')
       .insert([{
         user_id: userId,
-        daily_calories: macros.calories,
-        protein: macros.protein,
-        carbs: macros.carbs,
-        fats: macros.fats,
-        meal_plan: mealPlan,
+        macros: {
+          calories: dietPlan.daily_calories,
+          protein: dietPlan.macronutrients.protein,
+          carbs: dietPlan.macronutrients.carbs,
+          fat: dietPlan.macronutrients.fat
+        },
+        meal_plan: dietPlan.meal_plan,
+        shopping_list: dietPlan.shopping_list,
         is_active: true
       }])
       .select()
       .single();
-
-    if (dietPlanError) {
-      throw dietPlanError;
+    
+    if (saveError) {
+      console.error('Error saving diet plan:', saveError);
+      return NextResponse.json(
+        { status: 'error', message: 'Failed to save diet plan' },
+        { status: 500 }
+      );
     }
-
+    
     return NextResponse.json({
       status: 'success',
       message: 'Diet plan generated successfully',
-      data: dietPlan
+      data: savedPlan
     });
-
-  } catch (error) {
-    console.error('Diet plan generation error:', error);
     
-    // Handle validation errors
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          status: 'error', 
-          message: 'Invalid input data',
-          errors: error.errors 
-        },
-        { status: 400 }
-      );
-    }
-
-    // Handle other errors
+  } catch (error) {
+    console.error('Error generating diet plan:', error);
     return NextResponse.json(
       { 
         status: 'error', 
-        message: 'Failed to generate diet plan',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: 'An unexpected error occurred' 
       },
       { status: 500 }
     );
   }
+}
+
+async function generateDietPlan(userData: any) {
+  // Extract workout details from JSONB
+  const workoutDetails = userData.workout_details || {};
+  
+  // Create a prompt for OpenAI
+  const prompt = `
+    Create a personalized weekly diet plan for a ${userData.gender || 'person'} with the following characteristics:
+    
+    Basic Information:
+    - Age: ${userData.age} years
+    - Height: ${userData.height} cm
+    - Current Weight: ${userData.current_weight} kg
+    - Desired Weight: ${userData.desired_weight} kg
+    
+    Body Composition Goals:
+    - Current Body Fat: ${userData.current_body_fat}%
+    - Desired Body Fat: ${userData.desired_body_fat}%
+    - Duration of Diet Plan: ${userData.duration} weeks
+    
+    Workout Details:
+    - Workout Frequency: ${workoutDetails.workout_frequency || 'Not specified'} times per week
+    - Workout Schedule: ${workoutDetails.workout_schedule ? workoutDetails.workout_schedule.join(', ') : 'Not specified'}
+    - Cardio Type: ${workoutDetails.cardio_type || 'Not specified'}
+    - Cardio Duration: ${workoutDetails.cardio_duration || 'Not specified'} minutes
+    - Cardio Intensity: ${workoutDetails.cardio_intensity || 'Not specified'}
+    
+    Dietary Preferences:
+    - Meal Preferences: ${userData.meal_preferences}
+    - Food Allergies: ${userData.food_allergies || 'None'}
+    - Food Restrictions: ${userData.food_restrictions || 'None'}
+    
+    Health Information:
+    - Medical Conditions: ${userData.medical_conditions || 'None'}
+    - Additional Information: ${userData.additional_info || 'None'}
+    
+    Please provide a detailed weekly meal plan with the following structure:
+    1. Calculate the appropriate daily calorie intake based on the user's goals
+    2. Determine the optimal macronutrient breakdown (protein, carbs, fats)
+    3. Create a 7-day meal plan with breakfast, lunch, dinner, and snacks
+    4. Include portion sizes and approximate calorie counts for each meal
+    5. Provide a shopping list for the week
+    
+    Format the response as a JSON object with the following structure:
+    {
+      "daily_calories": number,
+      "macronutrients": {
+        "protein": number,
+        "carbs": number,
+        "fat": number
+      },
+      "meal_plan": {
+        "monday": {
+          "breakfast": string,
+          "lunch": string,
+          "dinner": string,
+          "snacks": string[]
+        },
+        "tuesday": { ... },
+        "wednesday": { ... },
+        "thursday": { ... },
+        "friday": { ... },
+        "saturday": { ... },
+        "sunday": { ... }
+      },
+      "shopping_list": string[]
+    }
+  `;
+  
+  // Call OpenAI API
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: "You are a professional nutritionist and dietitian specializing in creating personalized meal plans. Your task is to create a detailed, practical, and healthy meal plan based on the user's information. Ensure the plan is realistic, varied, and aligned with the user's goals and preferences."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.7,
+  });
+  
+  // Parse the response
+  const dietPlanJson = JSON.parse(response.choices[0].message.content || '{}');
+  
+  return dietPlanJson;
 } 

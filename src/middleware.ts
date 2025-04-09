@@ -27,11 +27,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If user is signed in and trying to access auth pages
-  if (session && path.startsWith('/auth/')) {
-    console.log('Session present, redirecting to dashboard');
-    const redirectUrl = new URL('/dashboard', request.url);
-    return NextResponse.redirect(redirectUrl);
+  // If user is signed in
+  if (session) {
+    // Check if user has completed onboarding
+    const { data: user } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', session.user.id)
+      .single();
+
+    // If trying to access auth pages, redirect to dashboard
+    if (path.startsWith('/auth/')) {
+      console.log('Session present, redirecting to dashboard');
+      const redirectUrl = new URL('/dashboard', request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // If trying to access onboarding pages but already completed onboarding
+    if (path.startsWith('/onboarding') && user) {
+      console.log('Onboarding completed, redirecting to dashboard');
+      const redirectUrl = new URL('/dashboard', request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // If trying to access dashboard but haven't completed onboarding
+    if (path.startsWith('/dashboard') && !user) {
+      console.log('Onboarding not completed, redirecting to onboarding');
+      const redirectUrl = new URL('/onboarding', request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   return res;

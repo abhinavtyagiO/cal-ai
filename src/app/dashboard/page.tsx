@@ -1,167 +1,176 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getDailyNutrition } from '@/lib/supabase/meal-logs';
-import { supabase } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
-export default function DashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dailyNutrition, setDailyNutrition] = useState<{
+interface DietPlan {
+  id: string;
+  user_id: string;
+  macros: {
     calories: number;
     protein: number;
     carbs: number;
-    fats: number;
-  } | null>(null);
-  const [user, setUser] = useState<any>(null);
-  
+    fat: number;
+  };
+  meal_plan: {
+    [key: string]: {
+      breakfast: string;
+      lunch: string;
+      dinner: string;
+      snacks: string[];
+    };
+  };
+  shopping_list: string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export default function DashboardPage() {
+  const [dietPlan, setDietPlan] = useState<DietPlan | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+
   useEffect(() => {
-    async function fetchData() {
+    async function fetchDietPlan() {
       try {
-        setLoading(true);
-        
-        // Get the current user
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session) {
-          setError('Not authenticated');
-          setLoading(false);
+          router.push('/login');
           return;
         }
         
-        setUser(session.user);
+        const { data, error } = await supabase
+          .from('diet_plans')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
         
-        // Get today's nutrition
-        const today = new Date();
-        const nutrition = await getDailyNutrition(session.user.id, today);
-        setDailyNutrition(nutrition);
+        if (error) {
+          throw error;
+        }
+        
+        setDietPlan(data);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        console.error('Error fetching diet plan:', err);
+        setError('Failed to load your diet plan. Please try again later.');
       } finally {
         setLoading(false);
       }
     }
     
-    fetchData();
-  }, []);
-  
+    fetchDietPlan();
+  }, [supabase, router]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your diet plan...</p>
+        </div>
       </div>
     );
   }
-  
+
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        <p className="font-bold">Error:</p>
-        <p>{error}</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-500">{error}</p>
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-4"
+          >
+            Try Again
+          </Button>
+        </div>
       </div>
     );
   }
-  
+
+  if (!dietPlan) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">No diet plan found. Please complete the onboarding process.</p>
+          <Button
+            onClick={() => router.push('/onboarding/basic-information')}
+            className="mt-4"
+          >
+            Start Onboarding
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Your Personalized Diet Plan</h1>
       
-      <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Calories Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Calories Today</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">{dailyNutrition?.calories || 0}</div>
-                    <div className="ml-2 text-sm text-gray-500">kcal</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Daily Targets</h2>
+          <div className="space-y-2">
+            <p><span className="font-medium">Calories:</span> {dietPlan.macros.calories} kcal</p>
+            <p><span className="font-medium">Protein:</span> {dietPlan.macros.protein}g</p>
+            <p><span className="font-medium">Carbs:</span> {dietPlan.macros.carbs}g</p>
+            <p><span className="font-medium">Fats:</span> {dietPlan.macros.fat}g</p>
           </div>
         </div>
         
-        {/* Protein Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Protein</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">{dailyNutrition?.protein || 0}</div>
-                    <div className="ml-2 text-sm text-gray-500">g</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Carbs Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Carbs</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">{dailyNutrition?.carbs || 0}</div>
-                    <div className="ml-2 text-sm text-gray-500">g</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Fats Card */}
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Fats</dt>
-                  <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">{dailyNutrition?.fats || 0}</div>
-                    <div className="ml-2 text-sm text-gray-500">g</div>
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4">Shopping List</h2>
+          <ul className="list-disc list-inside space-y-1">
+            {dietPlan.shopping_list.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
         </div>
       </div>
       
-      <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900">Welcome, {user?.user_metadata?.name || 'User'}!</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Track your meals, monitor your progress, and stay on track with your fitness goals.
-        </p>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold mb-4">Weekly Meal Plan</h2>
+        <div className="space-y-6">
+          {days.map((day) => (
+            <div key={day} className="border-b pb-4 last:border-b-0">
+              <h3 className="text-lg font-medium capitalize mb-2">{day}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="font-medium">Breakfast</p>
+                  <p className="text-gray-600">{dietPlan.meal_plan[day].breakfast}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Lunch</p>
+                  <p className="text-gray-600">{dietPlan.meal_plan[day].lunch}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Dinner</p>
+                  <p className="text-gray-600">{dietPlan.meal_plan[day].dinner}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Snacks</p>
+                  <ul className="list-disc list-inside text-gray-600">
+                    {dietPlan.meal_plan[day].snacks.map((snack, index) => (
+                      <li key={index}>{snack}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

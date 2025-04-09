@@ -3,106 +3,132 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import HealthInfoForm from '@/components/forms/HealthInfoForm';
+import LoadingScreen from '@/components/ui/loading-screen';
+import { Button } from '@/components/ui/button';
 import { OnboardingFormData } from '@/types/onboarding';
-import { completeOnboarding } from '@/utils/api';
 
 export default function HealthInfoPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previousData, setPreviousData] = useState<Partial<OnboardingFormData>>({});
+  const [previousData, setPreviousData] = useState<Partial<OnboardingFormData> | undefined>(undefined);
 
   useEffect(() => {
     // Retrieve data from localStorage
     const storedData = localStorage.getItem('onboardingData');
     if (storedData) {
-      try {
-        setPreviousData(JSON.parse(storedData));
-      } catch (e) {
-        console.error('Error parsing stored onboarding data:', e);
-      }
+      setPreviousData(JSON.parse(storedData));
     }
   }, []);
 
   const handleSubmit = async (data: Partial<OnboardingFormData>) => {
-    setIsLoading(true);
-    setError(null);
-    
     try {
-      // Merge with previous data
-      const mergedData = { ...previousData, ...data };
+      setIsLoading(true);
+      setError(null);
       
-      // Save to database
-      const result = await completeOnboarding(mergedData as OnboardingFormData);
+      // Save the health info data to localStorage
+      const updatedData = { ...previousData, ...data };
+      localStorage.setItem('onboardingData', JSON.stringify(updatedData));
       
-      if (!result.success) {
-        setError(result.message);
-        setIsLoading(false);
-        return;
+      // First, complete the onboarding by saving user data
+      const onboardingResponse = await fetch('/api/onboarding/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      });
+      
+      if (!onboardingResponse.ok) {
+        throw new Error('Failed to complete onboarding');
+      }
+      
+      // Then generate the diet plan
+      const dietPlanResponse = await fetch('/api/diet-plan/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedData),
+      });
+      
+      if (!dietPlanResponse.ok) {
+        throw new Error('Failed to generate diet plan');
       }
       
       // Clear onboarding data from localStorage
       localStorage.removeItem('onboardingData');
       
-      // Redirect to dashboard
+      // Redirect to the dashboard
       router.push('/dashboard');
-    } catch (err) {
-      console.error('Error completing onboarding:', err);
-      setError('An unexpected error occurred. Please try again.');
+    } catch (error) {
+      console.error('Error during onboarding completion:', error);
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
       setIsLoading(false);
     }
   };
 
-  const handleBack = () => {
-    router.push('/onboarding/dietary-preferences');
-  };
+  if (isLoading) {
+    return <LoadingScreen message="Generating your personalized diet plan..." />;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Health Information
-          </h2>
-          <p className="mt-4 text-lg text-gray-600">
-            Please provide any relevant health information to help us create a safe and effective diet plan.
-          </p>
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-blue-800 font-medium">
-              This is the final step of your onboarding process. Click "Complete Onboarding" to finish and access your personalized dashboard.
-            </p>
-          </div>
-        </div>
-
-        {error && (
-          <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">Error: </strong>
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
-
-        <div className="bg-white shadow sm:rounded-lg p-6">
+    <div className="container max-w-2xl mx-auto py-8 px-4">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold mb-2">Health Information</h1>
+        <p className="text-gray-600">
+          This is the final step of your onboarding. Please provide your health information to help us generate your personalized diet plan.
+        </p>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <form id="health-info-form" onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          const data = Object.fromEntries(formData.entries());
+          handleSubmit(data as Partial<OnboardingFormData>);
+        }}>
           <HealthInfoForm 
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit} 
             data={previousData}
             isLoading={isLoading}
           />
-        </div>
-
-        <div className="mt-8 flex justify-between items-center">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dietary Preferences
-          </button>
-          <div className="text-sm text-gray-500">
-            <p className="font-medium">Final Step (5 of 5)</p>
+          
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
+          <div className="mt-6 flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push('/onboarding/workout-details')}
+              disabled={isLoading}
+            >
+              Back
+            </Button>
+            
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                'Complete Onboarding'
+              )}
+            </Button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
