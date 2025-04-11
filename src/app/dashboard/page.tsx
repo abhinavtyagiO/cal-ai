@@ -75,7 +75,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your diet plan...</p>
+          <p className="mt-4 text-gray-800">Loading your diet plan...</p>
         </div>
       </div>
     );
@@ -101,7 +101,7 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-600">No diet plan found. Please complete the onboarding process.</p>
+          <p className="text-gray-800">No diet plan found. Please complete the onboarding process.</p>
           <Button
             onClick={() => router.push('/onboarding/basic-information')}
             className="mt-4"
@@ -149,19 +149,19 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="font-medium">Breakfast</p>
-                  <p className="text-gray-600">{dietPlan.meal_plan[day].breakfast}</p>
+                  <p className="text-gray-800">{dietPlan.meal_plan[day].breakfast}</p>
                 </div>
                 <div>
                   <p className="font-medium">Lunch</p>
-                  <p className="text-gray-600">{dietPlan.meal_plan[day].lunch}</p>
+                  <p className="text-gray-800">{dietPlan.meal_plan[day].lunch}</p>
                 </div>
                 <div>
                   <p className="font-medium">Dinner</p>
-                  <p className="text-gray-600">{dietPlan.meal_plan[day].dinner}</p>
+                  <p className="text-gray-800">{dietPlan.meal_plan[day].dinner}</p>
                 </div>
                 <div>
                   <p className="font-medium">Snacks</p>
-                  <ul className="list-disc list-inside text-gray-600">
+                  <ul className="list-disc list-inside text-gray-800">
                     {dietPlan.meal_plan[day].snacks.map((snack, index) => (
                       <li key={index}>{snack}</li>
                     ))}

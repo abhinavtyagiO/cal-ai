@@ -48,7 +48,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="name" className="block text-sm font-medium text-gray-800">
           Name
         </label>
         <input
@@ -63,7 +63,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
       </div>
 
       <div>
-        <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="gender" className="block text-sm font-medium text-gray-800">
           Gender
         </label>
         <select
@@ -81,7 +81,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
       </div>
 
       <div>
-        <label htmlFor="age" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="age" className="block text-sm font-medium text-gray-800">
           Age
         </label>
         <input
@@ -98,7 +98,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
       </div>
 
       <div>
-        <label htmlFor="height" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="height" className="block text-sm font-medium text-gray-800">
           Height (cm)
         </label>
         <input
@@ -115,7 +115,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
       </div>
 
       <div>
-        <label htmlFor="current_weight" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="current_weight" className="block text-sm font-medium text-gray-800">
           Current Weight (kg)
         </label>
         <input
@@ -133,7 +133,7 @@ export default function BasicInfoForm({ onSubmit, data, isLoading = false }: Bas
       </div>
 
       <div>
-        <label htmlFor="desired_weight" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="desired_weight" className="block text-sm font-medium text-gray-800">
           Desired Weight (kg)
         </label>
         <input

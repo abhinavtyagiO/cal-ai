@@ -118,9 +118,10 @@ async function generateDietPlan(userData: any) {
     - Food Allergies: ${userData.food_allergies || 'None'}
     - Food Restrictions: ${userData.food_restrictions || 'None'}
     
-    Health Information:
+    Please keep in mind the following information about the user, as this can help you create a more personalized diet plan:
     - Medical Conditions: ${userData.medical_conditions || 'None'}
-    - Additional Information: ${userData.additional_info || 'None'}
+
+    Please keep in mind that the user has a nationality of ${userData.additional_info || 'None'}. Provide the meal plan that is more aligned with the user's nationality.
     
     Please provide a detailed weekly meal plan with the following structure:
     1. Calculate the appropriate daily calorie intake based on the user's goals
@@ -174,6 +175,7 @@ async function generateDietPlan(userData: any) {
   
   // Parse the response
   const dietPlanJson = JSON.parse(response.choices[0].message.content || '{}');
+  console.log(dietPlanJson);
   
   return dietPlanJson;
 } 

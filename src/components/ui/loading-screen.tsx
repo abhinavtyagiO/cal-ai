@@ -35,11 +35,11 @@ export default function LoadingScreen({
           </div>
         </div>
         
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
           {message}{dots}
         </h2>
         
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-800 mb-6">
           {subMessage}
         </p>
         
@@ -51,7 +51,7 @@ export default function LoadingScreen({
           </div>
         </div>
         
-        <div className="mt-8 text-sm text-gray-500">
+        <div className="mt-8 text-sm text-gray-700">
           <p>We're analyzing your:</p>
           <ul className="mt-2 space-y-1">
             <li className="flex items-center">

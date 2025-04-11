@@ -39,7 +39,7 @@ export default function DietaryPreferencesForm({ onSubmit, data, isLoading = fal
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="meal_preferences" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="meal_preferences" className="block text-sm font-medium text-gray-800">
           Dietary Preference
         </label>
         <select
@@ -57,7 +57,7 @@ export default function DietaryPreferencesForm({ onSubmit, data, isLoading = fal
       </div>
 
       <div>
-        <label htmlFor="food_allergies" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="food_allergies" className="block text-sm font-medium text-gray-800">
           Food Allergies (if any)
         </label>
         <textarea
@@ -72,7 +72,7 @@ export default function DietaryPreferencesForm({ onSubmit, data, isLoading = fal
       </div>
 
       <div>
-        <label htmlFor="food_restrictions" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="food_restrictions" className="block text-sm font-medium text-gray-800">
           Food Restrictions (if any)
         </label>
         <textarea

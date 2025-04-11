@@ -20,7 +20,7 @@ export default function OnboardingLandingPage() {
           <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
             Welcome to Cal-AI!
           </h1>
-          <p className="mt-3 text-xl text-gray-500 sm:mt-4">
+          <p className="mt-3 text-xl text-gray-700 sm:mt-4">
             Your personal AI-powered fitness companion
           </p>
         </div>
@@ -45,10 +45,10 @@ export default function OnboardingLandingPage() {
                   Let's personalize your experience
                 </h2>
                 
-                <div className="space-y-4 text-gray-600 mb-8">
+                <div className="space-y-4 text-gray-700 mb-8">
                   <p>
                     To create your personalized diet and fitness plan, we need to gather some information about you.
-                  This will help us understand your goals and preferences better.
+                    This will help us understand your goals and preferences better.
                   </p>
                   
                   <div className="bg-blue-50 p-4 rounded-lg">
@@ -61,7 +61,7 @@ export default function OnboardingLandingPage() {
                     </ul>
                   </div>
                   
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-700">
                     Don't worry, you can always update this information later in your profile settings.
                   </p>
                 </div>
@@ -88,7 +88,7 @@ export default function OnboardingLandingPage() {
           </div>
         </div>
         
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-8 text-center text-sm text-gray-700">
           <p>This process will take about 5-10 minutes to complete.</p>
         </div>
       </div>

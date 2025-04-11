@@ -39,7 +39,7 @@ export default function BodyCompositionForm({ onSubmit, data, isLoading = false 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="current_body_fat" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="current_body_fat" className="block text-sm font-medium text-gray-800">
           Current Body Fat Percentage
         </label>
         <input
@@ -54,13 +54,13 @@ export default function BodyCompositionForm({ onSubmit, data, isLoading = false 
           required
           disabled={isLoading}
         />
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-700">
           If you're not sure, you can estimate or use a body fat calculator
         </p>
       </div>
 
       <div>
-        <label htmlFor="desired_body_fat" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="desired_body_fat" className="block text-sm font-medium text-gray-800">
           Desired Body Fat Percentage
         </label>
         <input
@@ -75,13 +75,13 @@ export default function BodyCompositionForm({ onSubmit, data, isLoading = false 
           required
           disabled={isLoading}
         />
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-700">
           Typical ranges: Men 10-20%, Women 18-28%
         </p>
       </div>
 
       <div>
-        <label htmlFor="duration" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="duration" className="block text-sm font-medium text-gray-800">
           Duration of Diet Plan (months)
         </label>
         <input
@@ -95,7 +95,7 @@ export default function BodyCompositionForm({ onSubmit, data, isLoading = false 
           required
           disabled={isLoading}
         />
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-700">
           How long would you like to follow this diet plan?
         </p>
       </div>

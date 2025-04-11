@@ -75,7 +75,7 @@ export default function WorkoutDetailsForm({ onSubmit, data, isLoading = false }
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="workout_frequency" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="workout_frequency" className="block text-sm font-medium text-gray-800">
           How many times do you exercise per week?
         </label>
         <input
@@ -92,7 +92,7 @@ export default function WorkoutDetailsForm({ onSubmit, data, isLoading = false }
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-800 mb-2">
           Which days do you typically exercise?
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -104,7 +104,7 @@ export default function WorkoutDetailsForm({ onSubmit, data, isLoading = false }
               className={`px-3 py-2 rounded-md text-sm font-medium ${
                 formData.workout_schedule.includes(day)
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
               } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
@@ -115,7 +115,7 @@ export default function WorkoutDetailsForm({ onSubmit, data, isLoading = false }
       </div>
 
       <div>
-        <label htmlFor="cardio_type" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="cardio_type" className="block text-sm font-medium text-gray-800">
           What type of cardio do you do?
         </label>
         <select
@@ -135,7 +135,7 @@ export default function WorkoutDetailsForm({ onSubmit, data, isLoading = false }
       </div>
 
       <div>
-        <label htmlFor="cardio_duration" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="cardio_duration" className="block text-sm font-medium text-gray-800">
           How long do you typically do cardio? (minutes)
         </label>
         <input
@@ -151,7 +151,7 @@ export default function WorkoutDetailsForm({ onSubmit, data, isLoading = false }
       </div>
 
       <div>
-        <label htmlFor="cardio_intensity" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="cardio_intensity" className="block text-sm font-medium text-gray-800">
           What is your typical cardio intensity?
         </label>
         <select

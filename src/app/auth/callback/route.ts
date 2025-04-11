@@ -23,11 +23,14 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
     try {
       console.log('Exchanging code for session...');
+      // Create a response object that we can modify
+      const response = NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
+      
+      // Create the Supabase client with the response object
+      const supabase = createRouteHandlerClient({ cookies: () => cookies() });
+      
       // Exchange the code for a session
       const { data: { session }, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
       
@@ -57,7 +60,7 @@ export async function GET(request: Request) {
         // Redirect based on whether user has completed onboarding
         if (user) {
           console.log('Redirecting to dashboard...');
-          return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
+          return response;
         } else {
           console.log('Redirecting to onboarding...');
           return NextResponse.redirect(new URL('/onboarding', requestUrl.origin));

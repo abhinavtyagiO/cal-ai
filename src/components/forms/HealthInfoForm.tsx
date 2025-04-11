@@ -33,7 +33,7 @@ export default function HealthInfoForm({ onSubmit, data, isLoading = false }: He
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="medical_conditions" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="medical_conditions" className="block text-sm font-medium text-gray-800">
           Medical Conditions
         </label>
         <textarea
@@ -42,7 +42,7 @@ export default function HealthInfoForm({ onSubmit, data, isLoading = false }: He
           onChange={(e) => setFormData({ ...formData, medical_conditions: e.target.value })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           rows={3}
-          placeholder="List any medical conditions, medications, or health concerns..."
+          placeholder="List any medical conditions that might affect your diet..."
           disabled={isLoading}
         />
         <p className="mt-2 text-sm text-gray-500">
@@ -51,7 +51,7 @@ export default function HealthInfoForm({ onSubmit, data, isLoading = false }: He
       </div>
 
       <div>
-        <label htmlFor="additional_info" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="additional_info" className="block text-sm font-medium text-gray-800">
           Additional Information
         </label>
         <textarea
